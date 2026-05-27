@@ -1,0 +1,147 @@
+:root {
+  --bg: #0d1117;
+  --fg: #c9d1d9;
+  --accent: #58a6ff;     /* Standard links and tag cloud */
+  --muted: #8b949e;
+  --card-bg: #161b22;
+  --border: #30363d;
+  --pill-color: #3fb950; /* Clean GitHub green for the card tags */
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  line-height: 1.6;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+#tag-cloud {
+  margin: 2rem auto 3rem auto;
+  padding: 3.5rem 4.5rem; 
+  display: flex;
+  flex-direction: column;
+  align-items: center; 
+  
+  /* SVG cloud with light blue stroke (%2358a6ff) and faint blue fill */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 100' preserveAspectRatio='none'%3E%3Cpath d='M 45 85 C 20 85, 10 65, 20 50 C 10 30, 30 10, 45 20 C 60 5, 100 5, 115 15 C 140 5, 180 15, 180 35 C 195 45, 195 70, 180 85 C 185 95, 140 95, 115 85 C 95 95, 65 95, 45 85 Z' fill='rgba(88,166,255,0.04)' stroke='%2358a6ff' stroke-width='1.5' stroke-opacity='0.8' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.tag-label {
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 0.8rem;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cloud-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center; 
+  align-items: center; /* The inline margins from JS will disrupt this perfectly */
+  max-width: 95%;
+}
+
+.tag {
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  transition: background 0.2s, transform 0.2s;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.tag:hover { 
+  background: var(--card-bg); 
+  text-decoration: none;
+  transform: scale(1.05); /* slight pop effect on hover */
+}
+
+.tag.active { 
+  background: var(--accent); 
+  color: var(--bg); 
+}
+
+.tag-pill {
+  display: inline-block;
+  background: rgba(63, 185, 80, 0.1); /* Very subtle green tint */
+  color: var(--pill-color);
+  border: 1px solid var(--pill-color);
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  margin-right: 0.3rem;
+}
+
+.project-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+time {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.filter-notice {
+  background: var(--card-bg);
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+
+.project-card h2 a[href^="http"]::after {
+  content: ' ↗';
+  font-size: 0.8em;
+  opacity: 0.7;
+}
+
+.site-desc {
+  color: var(--muted);
+  font-size: 1.05rem;
+  margin-top: -0.5rem;
+  margin-bottom: 2rem;
+}
+
+.icon-link {
+  display: inline;
+}
+
+.icon-link svg {
+  vertical-align: -0.15em;
+  margin-right: 0.2rem;
+}
+
+.project-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline; /* Aligns the bottom of the date with the title text */
+  margin-bottom: 0.5rem;
+  gap: 1rem;
+}
+
+.project-header h2 {
+  margin: 0;
+}
+
+.project-card time {
+  color: var(--muted);
+  font-size: 0.9rem;
+  white-space: nowrap; /* Prevents the year/date from wrapping to a new line */
+}
+
+.project-card p {
+  margin-top: 0.5rem;
+}

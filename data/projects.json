@@ -1,0 +1,10 @@
+[
+  {
+    "slug": "cert-manager-webhook-bunny",
+    "title": "cert-manager bunny.net webhook",
+    "date": "2026",
+    "summary": "A cert-manager DNS01 webhook provider built in Go to automate ACME certificate issuance and internal PKI lifecycle management.",
+    "tags": ["Go", "Kubernetes", "cert-manager", "PKI", "Automation"],
+    "url": "https://github.com/aardbol/cert-manager-webhook-bunny"
+  }
+]
