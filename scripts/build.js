@@ -56,12 +56,16 @@ function blogPostCards(posts) {
 function highlightContent(html) {
   if (!hljs) return html;
   return html.replace(/<pre lang="(\w+)">(.*?)<\/pre>/gs, (_, lang, inner) => {
-    const decoded = inner
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'");
+    const decoded = inner.replace(/&(?:amp|lt|gt|quot|#39);/g, m => {
+      switch (m) {
+        case '&amp;': return '&';
+        case '&lt;': return '<';
+        case '&gt;': return '>';
+        case '&quot;': return '"';
+        case '&#39;': return "'";
+        default: return m;
+      }
+    });
     let result;
     try {
       result = hljs.highlight(decoded, { language: lang });
