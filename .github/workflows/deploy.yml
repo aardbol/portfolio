@@ -25,7 +25,7 @@ jobs:
       
       - name: Build static HTML
         run: |
-          npm install
+          npm ci
           make build
       
       - name: Setup Pages

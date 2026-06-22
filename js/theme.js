@@ -19,6 +19,21 @@
     } else {
       localStorage.setItem(STORAGE_KEY, mode);
     }
+    updateHljsTheme();
+  }
+
+  function isDark() {
+    if (html.hasAttribute('data-theme')) {
+      return html.getAttribute('data-theme') === 'dark';
+    }
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+
+  function updateHljsTheme() {
+    const link = document.getElementById('hljs-theme');
+    if (!link) return;
+    const base = link.href.replace(/hljs(-light)?\.css$/, '');
+    link.href = base + (isDark() ? 'hljs.css' : 'hljs-light.css');
   }
 
   function cycle() {
@@ -55,18 +70,37 @@
   }
 
   function getAccentHSL() {
-    const accent = getComputedStyle(html).getPropertyValue('--accent').trim();
+    const accent = getComputedStyle(html).getPropertyValue('--tag-accent').trim();
     return hexToHSL(accent);
   }
 
+  function getBubbleVars(rank) {
+    const dark = isDark();
+    const baseAlpha = dark ? 0.04 : 0.06;
+    const alphaRange = dark ? 0.18 : 0.22;
+    const baseLum = dark ? 85 : 55;
+    const lumRange = dark ? 15 : 20;
+    return {
+      bgAlpha: (baseAlpha + rank * alphaRange).toFixed(2),
+      lum: Math.round(baseLum - rank * lumRange),
+    };
+  }
+
   apply(current);
+
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    if (current === 'auto') {
+      updateHljsTheme();
+    }
+  });
 
   document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.theme-toggle').forEach(btn => {
       btn.addEventListener('click', cycle);
     });
     updateButtons();
+    updateHljsTheme();
   });
 
-  window.__theme = { getAccentHSL, cycle, getMode: () => current };
+  window.__theme = { getAccentHSL, getBubbleVars, cycle, getMode: () => current };
 })();
