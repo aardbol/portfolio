@@ -57,9 +57,9 @@ function highlightContent(html) {
   if (!hljs) return html;
   return html.replace(/<pre lang="(\w+)">(.*?)<\/pre>/gs, (_, lang, inner) => {
     const decoded = inner
+      .replace(/&amp;/g, '&')
       .replace(/&lt;/g, '<')
       .replace(/&gt;/g, '>')
-      .replace(/&amp;/g, '&')
       .replace(/&quot;/g, '"')
       .replace(/&#39;/g, "'");
     let result;

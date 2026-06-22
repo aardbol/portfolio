@@ -86,7 +86,12 @@ export function initList(config) {
       const div = document.createElement('div');
       div.id = 'filter-notice';
       div.className = 'filter-notice';
-      div.innerHTML = `Showing ${config.plural} tagged "<strong>${activeTag}</strong>". <a href="#/">Clear filter</a>`;
+      div.append(
+        `Showing ${config.plural} tagged "`,
+        Object.assign(document.createElement('strong'), { textContent: activeTag }),
+        `". `,
+        Object.assign(document.createElement('a'), { href: '#/', textContent: 'Clear filter' }),
+      );
       content.insertBefore(div, content.firstChild);
     }
 
