@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blog — aardbol.dev</title>
+  <meta name="description" content="Blog posts about DevOps, Kubernetes, Go, and infrastructure automation">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <header>
+    <nav class="site-nav">
+      <a href="../">Projects</a>
+      <a href="./" class="active">Blog</a>
+      <button class="theme-toggle" aria-label="Toggle theme"></button>
+    </nav>
+    <h1>Blog</h1>
+    <nav id="tag-cloud" aria-label="Tag filter"></nav>
+  </header>
+  <main id="content">
+    <div class="blog-list">
+<!-- BUILD_POSTS -->
+    </div>
+  </main>
+  <footer>
+    <p></p>
+  </footer>
+  <script type="application/json" id="blog-data"><!-- BUILD_DATA --></script>
+  <script src="../js/theme.js"></script>
+  <script type="module" src="../js/blog.js"></script>
+</body>
+</html>

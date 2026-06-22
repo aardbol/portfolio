@@ -1,11 +1,55 @@
 :root {
+  --bg: #ffffff;
+  --fg: #24292f;
+  --accent: #0969da;
+  --muted: #656d76;
+  --card-bg: #f6f8fa;
+  --border: #d0d7de;
+  --pill-color: #1a7f37;
+  --pill-bg: rgba(26, 127, 55, 0.08);
+  --inline-code-bg: rgba(175, 184, 193, 0.2);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d1117;
+    --fg: #c9d1d9;
+    --accent: #58a6ff;
+    --muted: #8b949e;
+    --card-bg: #161b22;
+    --border: #30363d;
+    --pill-color: #3fb950;
+    --pill-bg: rgba(63, 185, 80, 0.1);
+    --inline-code-bg: rgba(110, 118, 129, 0.15);
+    color-scheme: dark;
+  }
+}
+
+[data-theme="light"] {
+  --bg: #ffffff;
+  --fg: #24292f;
+  --accent: #0969da;
+  --muted: #656d76;
+  --card-bg: #f6f8fa;
+  --border: #d0d7de;
+  --pill-color: #1a7f37;
+  --pill-bg: rgba(26, 127, 55, 0.08);
+  --inline-code-bg: rgba(175, 184, 193, 0.2);
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
   --bg: #0d1117;
   --fg: #c9d1d9;
-  --accent: #58a6ff;     /* Standard links and tag cloud */
+  --accent: #58a6ff;
   --muted: #8b949e;
   --card-bg: #161b22;
   --border: #30363d;
-  --pill-color: #3fb950; /* Clean GitHub green for the card tags */
+  --pill-color: #3fb950;
+  --pill-bg: rgba(63, 185, 80, 0.1);
+  --inline-code-bg: rgba(110, 118, 129, 0.15);
+  color-scheme: dark;
 }
 
 body {
@@ -23,16 +67,10 @@ a:hover { text-decoration: underline; }
 
 #tag-cloud {
   margin: 2rem auto 3rem auto;
-  padding: 3.5rem 4.5rem; 
+  padding: 1.5rem 0;
   display: flex;
   flex-direction: column;
-  align-items: center; 
-  
-  /* SVG cloud with light blue stroke (%2358a6ff) and faint blue fill */
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 100' preserveAspectRatio='none'%3E%3Cpath d='M 45 85 C 20 85, 10 65, 20 50 C 10 30, 30 10, 45 20 C 60 5, 100 5, 115 15 C 140 5, 180 15, 180 35 C 195 45, 195 70, 180 85 C 185 95, 140 95, 115 85 C 95 95, 65 95, 45 85 Z' fill='rgba(88,166,255,0.04)' stroke='%2358a6ff' stroke-width='1.5' stroke-opacity='0.8' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E");
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
-  background-position: center;
+  align-items: center;
 }
 
 .tag-label {
@@ -47,33 +85,36 @@ a:hover { text-decoration: underline; }
 .cloud-tags {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center; 
-  align-items: center; /* The inline margins from JS will disrupt this perfectly */
-  max-width: 95%;
+  justify-content: center;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
 }
 
 .tag {
-  padding: 0.15rem 0.4rem;
-  border-radius: 4px;
-  transition: background 0.2s, transform 0.2s;
+  border-radius: 6px;
+  padding: 0.2em 0.55em;
+  transition: background 0.2s, color 0.2s, outline-color 0.2s;
   line-height: 1.1;
   white-space: nowrap;
+  color: var(--accent);
+  font-size: 0.9rem;
 }
 
-.tag:hover { 
-  background: var(--card-bg); 
+.tag:hover {
+  outline: 1px solid var(--accent);
+  outline-offset: 1px;
   text-decoration: none;
-  transform: scale(1.05); /* slight pop effect on hover */
 }
 
-.tag.active { 
-  background: var(--accent); 
-  color: var(--bg); 
+.tag.active {
+  background: var(--accent);
+  color: var(--bg);
+  outline: none;
 }
 
 .tag-pill {
   display: inline-block;
-  background: rgba(63, 185, 80, 0.1); /* Very subtle green tint */
+  background: var(--pill-bg);
   color: var(--pill-color);
   border: 1px solid var(--pill-color);
   padding: 0.15rem 0.5rem;
@@ -94,6 +135,8 @@ time {
   color: var(--muted);
   font-size: 0.9rem;
 }
+
+.hidden { display: none; }
 
 .filter-notice {
   background: var(--card-bg);
@@ -142,6 +185,123 @@ time {
   white-space: nowrap; /* Prevents the year/date from wrapping to a new line */
 }
 
-.project-card p {
-  margin-top: 0.5rem;
+.tag-pill:hover {
+  text-decoration: none;
+}
+
+/* ---- full blog post ---- */
+.blog-content {
+  font-size: 1.05rem;
+  line-height: 1.75;
+}
+
+.blog-content h2 {
+  font-size: 1.3rem;
+  margin: 2rem 0 0.5rem;
+}
+
+.blog-content h3 {
+  font-size: 1.1rem;
+  margin: 1.5rem 0 0.4rem;
+}
+
+.blog-content p {
+  margin: 1rem 0;
+}
+
+.blog-content code {
+  background: var(--inline-code-bg);
+  padding: 0.15em 0.4em;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
+.blog-content pre {
+  border-radius: 6px;
+  margin: 1rem 0;
+  font-size: 0.9rem;
+}
+
+.back-link {
+  margin-top: 2rem;
+}
+
+/* ---- site nav ---- */
+.site-nav {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+  align-items: center;
+}
+
+.site-nav a {
+  color: var(--muted);
+  font-size: 0.9rem;
+  padding-bottom: 0.2em;
+  border-bottom: 2px solid transparent;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.site-nav a:hover {
+  text-decoration: none;
+  color: var(--fg);
+}
+
+.site-nav a.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.theme-toggle {
+  margin-left: auto;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0.25em 0.5em;
+  font-size: 1rem;
+  line-height: 1;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.theme-toggle:hover {
+  color: var(--fg);
+  border-color: var(--accent);
+}
+
+/* ---- blog posts ---- */
+.blog-post {
+  padding: 1.25rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.blog-post:last-child {
+  border-bottom: none;
+}
+
+.blog-post-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.blog-post-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.blog-post-header time {
+  color: var(--muted);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.blog-post-sep {
+  color: var(--border);
+}
+
+.blog-post .tags {
+  margin-top: 0.4rem;
 }

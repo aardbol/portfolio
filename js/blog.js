@@ -1,11 +1,11 @@
 const content = document.getElementById('content');
 const tagCloud = document.getElementById('tag-cloud');
 let activeTag = null;
-let allProjects = [];
+let allPosts = [];
 
-function loadProjects() {
-  const el = document.getElementById('projects-data');
-  if (!el) throw new Error('No embedded projects data found');
+function loadPosts() {
+  const el = document.getElementById('blog-data');
+  if (!el) throw new Error('No embedded blog data found');
   return JSON.parse(el.textContent);
 }
 
@@ -20,21 +20,15 @@ function router() {
       activeTag = null;
     }
     buildTagCloud();
-    filterCards();
-  } else if (hash === 'cv') {
-    showMessage('<p>CV content or redirect...</p>');
+    filterPosts();
   } else {
-    showMessage('<p>Page not found.</p>');
+    content.innerHTML = '<p>Page not found.</p>';
   }
-}
-
-function showMessage(msg) {
-  content.innerHTML = msg;
 }
 
 function buildTagCloud() {
   const counts = {};
-  allProjects.forEach(p => p.tags.forEach(t => {
+  allPosts.forEach(p => p.tags.forEach(t => {
     counts[t] = (counts[t] || 0) + 1;
   }));
 
@@ -55,7 +49,7 @@ function buildTagCloud() {
       ? `font-size:${size.toFixed(2)}rem`
       : `font-size:${size.toFixed(2)}rem;background:hsl(${h},${s}%,${(88 - rank * 10).toFixed(0)}%,${bgAlpha});color:hsl(${h},${s}%,${lum}%)`;
 
-    return `<a href="${targetHash}" class="tag${isActive ? ' active' : ''}" style="${inlineStyle}" title="${count} project${count > 1 ? 's' : ''}">${tag}</a>`;
+    return `<a href="${targetHash}" class="tag${isActive ? ' active' : ''}" style="${inlineStyle}" title="${count} post${count > 1 ? 's' : ''}">${tag}</a>`;
   }).join('');
 
   tagCloud.innerHTML = `
@@ -66,24 +60,24 @@ function buildTagCloud() {
   `;
 }
 
-function filterCards() {
+function filterPosts() {
   const notice = document.getElementById('filter-notice');
   if (notice) notice.remove();
 
-  const cards = content.querySelectorAll('.project-card');
+  const posts = content.querySelectorAll('.blog-post');
   let visible = 0;
 
-  cards.forEach(card => {
+  posts.forEach(post => {
     if (activeTag) {
-      const tags = card.dataset.tags.split(',');
+      const tags = post.dataset.tags.split(',');
       if (tags.includes(activeTag)) {
-        card.classList.remove('hidden');
+        post.classList.remove('hidden');
         visible++;
       } else {
-        card.classList.add('hidden');
+        post.classList.add('hidden');
       }
     } else {
-      card.classList.remove('hidden');
+      post.classList.remove('hidden');
     }
   });
 
@@ -91,7 +85,7 @@ function filterCards() {
     const div = document.createElement('div');
     div.id = 'filter-notice';
     div.className = 'filter-notice';
-    div.innerHTML = `Showing projects tagged "<strong>${activeTag}</strong>". <a href="#/">Clear filter</a>`;
+    div.innerHTML = `Showing posts tagged "<strong>${activeTag}</strong>". <a href="#/">Clear filter</a>`;
     content.insertBefore(div, content.firstChild);
   }
 
@@ -100,8 +94,8 @@ function filterCards() {
   if (activeTag && visible === 0) {
     const noMatch = document.createElement('p');
     noMatch.id = 'no-match';
-    noMatch.textContent = 'No projects match this tag.';
-    content.querySelector('.project-list').appendChild(noMatch);
+    noMatch.textContent = 'No posts match this tag.';
+    content.querySelector('.blog-list').appendChild(noMatch);
   }
 }
 
@@ -109,10 +103,10 @@ window.addEventListener('hashchange', router);
 
 async function init() {
   try {
-    allProjects = loadProjects();
+    allPosts = loadPosts();
     router();
   } catch (err) {
-    content.innerHTML = `<p class="error">Error loading projects: ${err.message}</p>`;
+    content.innerHTML = `<p class="error">Error loading blog: ${err.message}</p>`;
     console.error(err);
   }
 }

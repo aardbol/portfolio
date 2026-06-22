@@ -9,6 +9,11 @@
 </head>
 <body>
   <header>
+    <nav class="site-nav">
+      <a href="./" class="active">Projects</a>
+      <a href="blog/">Blog</a>
+      <button class="theme-toggle" aria-label="Toggle theme"></button>
+    </nav>
     <h1>Projects</h1>
     <p class="site-desc">
     I'm <a href="https://github.com/aardbol" target="_blank" rel="noopener" class="icon-link">
@@ -20,11 +25,30 @@
     <nav id="tag-cloud" aria-label="Tag filter"></nav>
   </header>
   <main id="content">
-    <p>Loading projects...</p>
+    <div class="project-list">
+  <article class="project-card" data-tags="Go,Kubernetes,CSI,Helm,Prometheus,Storage">
+    <header class="project-header">
+      <h2><a href="https://github.com/upcloud-tools/upcloud-csi" target="_blank" rel="noopener">UpCloud CSI Driver</a></h2>
+      <time>2026</time>
+    </header>
+    <p>Kubernetes CSI driver for UpCloud Block Storage. Added online volume expansion, Helm chart with OCI publishing, snapshot support, Prometheus metrics, and hardened security.</p>
+    <div class="tags"><span class="tag-pill">Go</span> <span class="tag-pill">Kubernetes</span> <span class="tag-pill">CSI</span> <span class="tag-pill">Helm</span> <span class="tag-pill">Prometheus</span> <span class="tag-pill">Storage</span></div>
+  </article>
+  <article class="project-card" data-tags="Go,Kubernetes,cert-manager,PKI,Automation">
+    <header class="project-header">
+      <h2><a href="https://github.com/aardbol/cert-manager-webhook-bunny" target="_blank" rel="noopener">cert-manager bunny.net webhook</a></h2>
+      <time>2026</time>
+    </header>
+    <p>A cert-manager DNS01 webhook provider built in Go to automate ACME certificate issuance and internal PKI lifecycle management.</p>
+    <div class="tags"><span class="tag-pill">Go</span> <span class="tag-pill">Kubernetes</span> <span class="tag-pill">cert-manager</span> <span class="tag-pill">PKI</span> <span class="tag-pill">Automation</span></div>
+  </article>
+    </div>
   </main>
   <footer>
     <p></p>
   </footer>
+  <script type="application/json" id="projects-data">[{"slug":"upcloud-csi","title":"UpCloud CSI Driver","date":"2026","summary":"Kubernetes CSI driver for UpCloud Block Storage. Added online volume expansion, Helm chart with OCI publishing, snapshot support, Prometheus metrics, and hardened security.","tags":["Go","Kubernetes","CSI","Helm","Prometheus","Storage"],"url":"https://github.com/upcloud-tools/upcloud-csi"},{"slug":"cert-manager-webhook-bunny","title":"cert-manager bunny.net webhook","date":"2026","summary":"A cert-manager DNS01 webhook provider built in Go to automate ACME certificate issuance and internal PKI lifecycle management.","tags":["Go","Kubernetes","cert-manager","PKI","Automation"],"url":"https://github.com/aardbol/cert-manager-webhook-bunny"}]</script>
+  <script src="js/theme.js"></script>
   <script type="module" src="js/app.js"></script>
 </body>
 </html>

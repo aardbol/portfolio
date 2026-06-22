@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attach Custom Cloud Servers to UpCloud Managed Kubernetes — aardbol.dev</title>
+  <meta name="description" content="UpCloud Kubernetes Service (UKS) provides a managed control plane. But you can also attach individual cloud servers directly, outside the node group mechanism. Here's how it works.">
+  <link rel="stylesheet" href="../../../css/style.css">
+  <link rel="stylesheet" href="../../../css/hljs.css">
+</head>
+<body>
+  <header>
+    <nav class="site-nav">
+      <a href="../../../">Projects</a>
+      <a href="../../">Blog</a>
+      <button class="theme-toggle" aria-label="Toggle theme"></button>
+    </nav>
+    <h1>Attach Custom Cloud Servers to UpCloud Managed Kubernetes</h1>
+    <time>2026-06-22</time>
+  </header>
+  <main>
+    <div class="blog-content">
+<p>UpCloud Kubernetes Service (UKS) provides a managed control plane. You scale capacity through node groups via the UKS API. But you can also attach individual cloud servers directly, outside the node group mechanism.</p><p>I tested this end-to-end on a UKS 1.35 cluster.</p><h2>Why Bother?</h2><p>Tools like Karpenter need this capability. Karpenter provisions servers one at a time, picking the most cost-efficient plan per workload. Without the ability to attach arbitrary VMs, Karpenter can't work with UKS.</p><p>And also because it's fun to experiment.</p><h2>How It Works</h2><p>Create a VM with <code>POST /server</code>, attach it to the cluster's private network, and run <code>kubeadm join</code> through a cloud-init script. The VM registers with the control plane like any kubeadm-managed worker as soon as the VM boots up. Cilium deploys its DaemonSet to the node, and pods schedule within a minute or two.</p><p>The key requirement: the VM must live in the same region as the cluster. UpCloud UKS SDN private networks don't span regions. A VM in <code>fi-hel1</code> can't join a private network in <code>de-fra1</code>.</p><h2>The Test</h2><p>I ran two tests on a UKS 1.35 cluster with Cilium CNI and two existing nodes.</p><h3>Test 1: Using only a public network</h3><p>I created a CLOUDNATIVE-1xCPU-4GB VM using the UpCloud K8s 1.35 template with only public and utility interfaces. The cloud-init script ran <code>kubeadm join</code> against the public API server endpoint.</p><p>This did register the node, which <code>kubectl get nodes</code> showed, but it stayed <code>NotReady</code>. The API server's internal endpoint (<code>:6443</code>) was unreachable from outside the UKS network, and Cilium couldn't reach the control plane to initialize.</p><h3>Test 2: attaching the private UKS network</h3><p>I created a second VM with a plain Debian 13 template. This time I attached it to the cluster's private network (<code>10.0.0.0/24</code>) using <code>--network "type=private,network=&lt;uks-network-uuid&gt;"</code>.</p><p>The cloud-init script installed containerd, kubeadm, kubelet, and kubectl, fixed a CNI path for Debian, then ran <code>kubeadm join</code> against the internal API server endpoint (<code>:6443</code>). The internal endpoint was immediately reachable over the private network.</p><p>Within 90 seconds the node reached <code>Ready</code>, with Cilium deployed:</p><pre><code class="hljs language-bash">NAME               STATUS   ROLES    VERSION   AGE
+custom-worker-01   Ready    &lt;none&gt;   v1.35.6   3m15s</code></pre><p>I scheduled an nginx pod and verified connectivity.</p><h2>Step-by-Step</h2><h3>1. Create a Bootstrap Token</h3><pre><code class="hljs language-yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span>
+<span class="hljs-attr">kind:</span> <span class="hljs-string">Secret</span>
+<span class="hljs-attr">metadata:</span>
+  <span class="hljs-attr">name:</span> <span class="hljs-string">bootstrap-token-custom01</span>
+  <span class="hljs-attr">namespace:</span> <span class="hljs-string">kube-system</span>
+<span class="hljs-attr">type:</span> <span class="hljs-string">bootstrap.kubernetes.io/token</span>
+<span class="hljs-attr">stringData:</span>
+  <span class="hljs-attr">token-id:</span> <span class="hljs-string">custom1</span>
+  <span class="hljs-attr">token-secret:</span> <span class="hljs-string">abcdef0123456789</span>
+  <span class="hljs-attr">usage-bootstrap-authentication:</span> <span class="hljs-string">&quot;true&quot;</span>
+  <span class="hljs-attr">usage-bootstrap-signing:</span> <span class="hljs-string">&quot;true&quot;</span>
+  <span class="hljs-attr">auth-extra-groups:</span> <span class="hljs-string">system:bootstrappers:kubeadm:default-node-token</span></code></pre><p>Apply it:</p><pre><code class="hljs language-bash">kubectl apply -f bootstrap-token.yaml</code></pre><h3>2. Collect Cluster Info</h3><pre><code class="hljs language-bash"><span class="hljs-comment"># API server endpoint</span>
+kubectl config view --raw -o jsonpath=<span class="hljs-string">&#x27;{.clusters[0].cluster.server}&#x27;</span>
+
+<span class="hljs-comment"># CA certificate hash</span>
+openssl s_client -connect &lt;api-server-host&gt;:6443 &lt;/dev/null 2&gt;/dev/null \
+  | openssl x509 -pubkey -noout | <span class="hljs-built_in">sha256sum</span> | awk <span class="hljs-string">&#x27;{print &quot;sha256:&quot;$1}&#x27;</span></code></pre><h3>3. Save the Cloud-Init Script for use at VM creation time</h3><pre><code class="hljs language-yaml"><span class="hljs-comment">#cloud-config</span>
+
+<span class="hljs-attr">packages:</span>
+  <span class="hljs-bullet">-</span> <span class="hljs-string">apt-transport-https</span>
+  <span class="hljs-bullet">-</span> <span class="hljs-string">ca-certificates</span>
+  <span class="hljs-bullet">-</span> <span class="hljs-string">curl</span>
+  <span class="hljs-bullet">-</span> <span class="hljs-string">gnupg</span>
+
+<span class="hljs-attr">package_update:</span> <span class="hljs-literal">true</span>
+<span class="hljs-attr">package_upgrade:</span> <span class="hljs-literal">true</span>
+
+<span class="hljs-attr">write_files:</span>
+  <span class="hljs-bullet">-</span> <span class="hljs-attr">path:</span> <span class="hljs-string">/etc/modules-load.d/containerd.conf</span>
+    <span class="hljs-attr">content:</span> <span class="hljs-string">|
+      overlay
+      br_netfilter
+</span>  <span class="hljs-bullet">-</span> <span class="hljs-attr">path:</span> <span class="hljs-string">/etc/sysctl.d/99-kubernetes-cri.conf</span>
+    <span class="hljs-attr">content:</span> <span class="hljs-string">|
+      net.bridge.bridge-nf-call-iptables = 1
+      net.bridge.bridge-nf-call-ip6tables = 1
+      net.ipv4.ip_forward = 1
+</span>
+<span class="hljs-attr">runcmd:</span>
+  <span class="hljs-bullet">-</span> <span class="hljs-string">modprobe</span> <span class="hljs-string">overlay</span>
+  <span class="hljs-bullet">-</span> <span class="hljs-string">modprobe</span> <span class="hljs-string">br_netfilter</span>
+  <span class="hljs-bullet">-</span> <span class="hljs-string">sysctl</span> <span class="hljs-string">--system</span>
+
+  <span class="hljs-bullet">-</span> <span class="hljs-string">apt-get</span> <span class="hljs-string">install</span> <span class="hljs-string">-y</span> <span class="hljs-string">containerd</span>
+  <span class="hljs-bullet">-</span> <span class="hljs-string">mkdir</span> <span class="hljs-string">-p</span> <span class="hljs-string">/etc/containerd</span>
+  <span class="hljs-bullet">-</span> <span class="hljs-string">containerd</span> <span class="hljs-string">config</span> <span class="hljs-string">default</span> <span class="hljs-string">&gt;</span> <span class="hljs-string">/etc/containerd/config.toml</span>
+  <span class="hljs-bullet">-</span> <span class="hljs-string">sed</span> <span class="hljs-string">-i</span> <span class="hljs-string">&#x27;s/SystemdCgroup = false/SystemdCgroup = true/&#x27;</span> <span class="hljs-string">/etc/containerd/config.toml</span>
+  <span class="hljs-bullet">-</span> <span class="hljs-string">systemctl</span> <span class="hljs-string">restart</span> <span class="hljs-string">containerd</span>
+
+  <span class="hljs-bullet">-</span> <span class="hljs-string">mkdir</span> <span class="hljs-string">-p</span> <span class="hljs-string">/etc/apt/keyrings</span>
+  <span class="hljs-bullet">-</span> <span class="hljs-string">curl</span> <span class="hljs-string">-fsSL</span> <span class="hljs-string">https://pkgs.k8s.io/core:/stable:/v1.35/deb/Release.key</span> <span class="hljs-string">\</span>
+    <span class="hljs-string">|</span> <span class="hljs-string">gpg</span> <span class="hljs-string">--dearmor</span> <span class="hljs-string">-o</span> <span class="hljs-string">/etc/apt/keyrings/kubernetes-apt-keyring.gpg</span>
+  <span class="hljs-bullet">-</span> <span class="hljs-string">echo</span> <span class="hljs-string">&#x27;deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.35/deb/ /&#x27;</span> <span class="hljs-string">\</span>
+    <span class="hljs-string">&gt;</span> <span class="hljs-string">/etc/apt/sources.list.d/kubernetes.list</span>
+  <span class="hljs-bullet">-</span> <span class="hljs-string">apt-get</span> <span class="hljs-string">update</span>
+  <span class="hljs-bullet">-</span> <span class="hljs-string">apt-get</span> <span class="hljs-string">install</span> <span class="hljs-string">-y</span> <span class="hljs-string">kubelet</span> <span class="hljs-string">kubeadm</span> <span class="hljs-string">kubectl</span>
+  <span class="hljs-bullet">-</span> <span class="hljs-string">apt-mark</span> <span class="hljs-string">hold</span> <span class="hljs-string">kubelet</span> <span class="hljs-string">kubeadm</span> <span class="hljs-string">kubectl</span>
+
+  <span class="hljs-bullet">-</span> <span class="hljs-string">ln</span> <span class="hljs-string">-sf</span> <span class="hljs-string">/opt/cni/bin</span> <span class="hljs-string">/usr/lib/cni</span>
+
+  <span class="hljs-bullet">-</span> <span class="hljs-string">&gt;
+    PRIVATE_IP=$(ip -4 addr show eth3 | grep -oP &#x27;(?&lt;=inet\s)\d+(\.\d+){3}&#x27; | head -1);
+    kubeadm join &lt;API_SERVER_ENDPOINT&gt; \
+      --token custom1.abcdef0123456789 \
+      --discovery-token-ca-cert-hash sha256:&lt;CA_HASH&gt; \
+      --node-name karpenter-$(hostname)
+</span>
+  <span class="hljs-bullet">-</span> <span class="hljs-string">systemctl</span> <span class="hljs-string">enable</span> <span class="hljs-string">kubelet</span></code></pre><p>Replace <code>&lt;API_SERVER_ENDPOINT&gt;</code> and <code>&lt;CA_HASH&gt;</code> with values from step 2. Use the internal endpoint (<code>:6443</code>) since the VM will be on the private network.</p><h3>4. Find Your UKS Network UUID</h3><pre><code class="hljs language-bash">upctl kubernetes show &lt;cluster-name&gt;</code></pre><p>Look for <code>Network UUID</code> in the output. Or pull it from an existing node:</p><pre><code class="hljs language-bash">kubectl get node &lt;existing-node&gt; -o jsonpath=<span class="hljs-string">&#x27;{.metadata.annotations}&#x27;</span> | grep upcloud-vm-private-nw-uuid</code></pre><h3>5. Create the VM</h3><pre><code class="hljs language-bash">upctl server create \
+  --zone de-fra1 \
+  --hostname custom-worker-01 \
+  --title <span class="hljs-string">&quot;custom-worker-01&quot;</span> \
+  --plan <span class="hljs-string">&quot;CLOUDNATIVE-1xCPU-4GB&quot;</span> \
+  --os <span class="hljs-string">&quot;Debian GNU/Linux 13 (Trixie)&quot;</span> \
+  --ssh-keys ~/.ssh/id_ed25519.pub \
+  --network <span class="hljs-string">&quot;type=public&quot;</span> \
+  --network <span class="hljs-string">&quot;type=utility&quot;</span> \
+  --network <span class="hljs-string">&quot;type=private,network=&lt;uks-network-uuid&gt;&quot;</span> \
+  --enable-metadata \
+  --user-data <span class="hljs-string">&quot;<span class="hljs-subst">$(cat cloud-init.yaml)</span>&quot;</span> \
+  --<span class="hljs-built_in">wait</span></code></pre><p>Your zone must match the cluster's zone.</p><h3>6. Verify</h3><pre><code class="hljs language-bash">kubectl get nodes -o wide</code></pre><h2>Notes</h2><ol><li><strong>Your VM must share the cluster's region.</strong> SDN private networks are region-scoped. No cross-region attachments.</li><li><strong>API server port changes by context.</strong> The internal endpoint serves on <code>6443</code>. The public load balancer uses <code>7443</code>. VMs on the private network should use <code>6443</code>.</li><li><strong>The CA hash in <code>cluster-info</code> ConfigMap may not match.</strong> I extracted the actual cert hash from the API server: <code>openssl s_client -connect &lt;host&gt;:6443 &lt;/dev/null 2&gt;/dev/null | openssl x509 -pubkey -noout | sha256sum</code>.</li><li><strong>Debian puts CNI plugins in the wrong place.</strong> Kubelet looks in <code>/usr/lib/cni</code>. Cilium installs to <code>/opt/cni/bin</code>. The cloud-init script above creates a symlink. The UpCloud K8s template handles this.</li><li><strong>Kubelet picks the wrong IP.</strong> Without <code>--node-ip</code>, kubelet may register the public IP. The script above extracts the private IP from <code>eth3</code> (the SDN interface) and passes it to <code>kubeadm join</code>. Confirm your interface numbering by running <code>ip addr</code> on an existing UKS node.</li></ol>
+    </div>
+    <div class="tags"><a href="../../#/tag/Kubernetes" class="tag-pill">Kubernetes</a> <a href="../../#/tag/UpCloud" class="tag-pill">UpCloud</a> <a href="../../#/tag/kubeadm" class="tag-pill">kubeadm</a> <a href="../../#/tag/cloud-init" class="tag-pill">cloud-init</a> <a href="../../#/tag/Networking" class="tag-pill">Networking</a> <a href="../../#/tag/Cilium" class="tag-pill">Cilium</a></div>
+    <nav class="back-link">
+      <a href="../../">← Back to blog</a>
+    </nav>
+  </main>
+  <footer><p></p></footer>
+  <script src="../../../js/theme.js"></script>
+</body>
+</html>
