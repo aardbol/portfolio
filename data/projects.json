@@ -1,5 +1,13 @@
 [
   {
+    "slug": "upcloud-csi",
+    "title": "UpCloud CSI Driver (community fork)",
+    "date": "2026",
+    "summary": "Kubernetes CSI driver for UpCloud Block Storage. Added online volume expansion, Helm chart with OCI publishing, snapshot support, Prometheus metrics, and a minimal Alpine-based runtime image.",
+    "tags": ["Go", "Kubernetes", "CSI", "Helm", "Prometheus", "Storage"],
+    "url": "https://github.com/upcloud-tools/upcloud-csi"
+  },
+  {
     "slug": "cert-manager-webhook-bunny",
     "title": "cert-manager bunny.net webhook",
     "date": "2026",
