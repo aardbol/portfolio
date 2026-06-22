@@ -1,4 +1,4 @@
-:root, [data-theme="light"] {
+:root {
   --bg: #ffffff;
   --fg: #24292f;
   --accent: #0969da;
@@ -26,6 +26,20 @@
     --inline-code-bg: rgba(110, 118, 129, 0.15);
     color-scheme: dark;
   }
+}
+
+[data-theme="light"] {
+  --bg: #ffffff;
+  --fg: #24292f;
+  --accent: #0969da;
+  --tag-accent: #0550ae;
+  --muted: #656d76;
+  --card-bg: #f6f8fa;
+  --border: #d0d7de;
+  --pill-color: #58a6ff;
+  --pill-bg: rgba(88, 166, 255, 0.08);
+  --inline-code-bg: rgba(175, 184, 193, 0.2);
+  color-scheme: light;
 }
 
 [data-theme="dark"] {

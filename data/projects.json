@@ -1,5 +1,13 @@
 [
   {
+    "slug": "k8s-lint",
+    "title": "k8s-lint",
+    "date": "2026",
+    "summary": "GitHub Action that validates Kubernetes manifest files. I added folder, Helm chart template and devcontainer support.",
+    "tags": ["TypeScript", "Kubernetes", "GitHub Actions", "CI/CD"],
+    "url": "https://github.com/aardbol/k8s-lint"
+  },
+  {
     "slug": "upcloud-csi",
     "title": "UpCloud CSI Driver",
     "date": "2026",

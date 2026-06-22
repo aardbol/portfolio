@@ -1,54 +1,45 @@
 (() => {
   const html = document.documentElement;
   const STORAGE_KEY = 'theme';
-  const MODES = ['auto', 'light', 'dark'];
-  const ICONS = { auto: '\u25D0', light: '\u2600', dark: '\u263D' };
-  const LABELS = { auto: 'Auto', light: 'Light', dark: 'Dark' };
+  const ICONS = { light: '\u2600', dark: '\u263D' };
+  const LABELS = { light: 'Light', dark: 'Dark' };
 
-  let current = localStorage.getItem(STORAGE_KEY) || 'auto';
+  let saved = localStorage.getItem(STORAGE_KEY);
+  let current = saved === 'light' || saved === 'dark' ? saved : null;
+  let manualOverride = saved !== null;
+
+  function effective() {
+    return current || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  }
 
   function apply(mode) {
-    if (mode === 'auto') {
-      html.removeAttribute('data-theme');
-    } else {
-      html.setAttribute('data-theme', mode);
-    }
+    html.setAttribute('data-theme', mode);
     current = mode;
-    if (mode === 'auto') {
-      localStorage.removeItem(STORAGE_KEY);
-    } else {
-      localStorage.setItem(STORAGE_KEY, mode);
-    }
     updateHljsTheme();
   }
 
-  function isDark() {
-    if (html.hasAttribute('data-theme')) {
-      return html.getAttribute('data-theme') === 'dark';
-    }
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  }
-
-  function updateHljsTheme() {
-    const link = document.getElementById('hljs-theme');
-    if (!link) return;
-    const base = link.href.replace(/hljs(-light)?\.css$/, '');
-    link.href = base + (isDark() ? 'hljs.css' : 'hljs-light.css');
-  }
-
   function cycle() {
-    const idx = MODES.indexOf(current);
-    const next = MODES[(idx + 1) % MODES.length];
+    const next = effective() === 'dark' ? 'light' : 'dark';
     apply(next);
+    localStorage.setItem(STORAGE_KEY, next);
+    manualOverride = true;
     updateButtons();
     window.dispatchEvent(new CustomEvent('themechange'));
   }
 
   function updateButtons() {
     document.querySelectorAll('.theme-toggle').forEach(btn => {
-      btn.textContent = ICONS[current];
-      btn.title = `Theme: ${LABELS[current]} — click to cycle`;
+      const m = effective();
+      btn.textContent = ICONS[m];
+      btn.title = `Theme: ${LABELS[m]} — click to toggle`;
     });
+  }
+
+  function updateHljsTheme() {
+    const link = document.getElementById('hljs-theme');
+    if (!link) return;
+    const base = link.href.replace(/hljs(-light)?\.css$/, '');
+    link.href = base + (effective() === 'dark' ? 'hljs.css' : 'hljs-light.css');
   }
 
   function hexToHSL(hex) {
@@ -69,28 +60,13 @@
     return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) };
   }
 
-  function getAccentHSL() {
-    const accent = getComputedStyle(html).getPropertyValue('--tag-accent').trim();
-    return hexToHSL(accent);
-  }
-
-  function getBubbleVars(rank) {
-    const dark = isDark();
-    const baseAlpha = dark ? 0.04 : 0.06;
-    const alphaRange = dark ? 0.18 : 0.22;
-    const baseLum = dark ? 85 : 55;
-    const lumRange = dark ? 15 : 20;
-    return {
-      bgAlpha: (baseAlpha + rank * alphaRange).toFixed(2),
-      lum: Math.round(baseLum - rank * lumRange),
-    };
-  }
-
-  apply(current);
+  apply(effective());
 
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-    if (current === 'auto') {
-      updateHljsTheme();
+    if (!manualOverride) {
+      apply(effective());
+      updateButtons();
+      window.dispatchEvent(new CustomEvent('themechange'));
     }
   });
 
@@ -102,5 +78,19 @@
     updateHljsTheme();
   });
 
-  window.__theme = { getAccentHSL, getBubbleVars, cycle, getMode: () => current };
+  window.__theme = {
+    getAccentHSL: () => {
+      const accent = getComputedStyle(html).getPropertyValue('--tag-accent').trim();
+      return hexToHSL(accent);
+    },
+    getBubbleVars: (rank) => {
+      const dark = effective() === 'dark';
+      return {
+        bgAlpha: ((dark ? 0.04 : 0.06) + rank * (dark ? 0.18 : 0.22)).toFixed(2),
+        lum: Math.round((dark ? 85 : 55) - rank * (dark ? 15 : 20)),
+      };
+    },
+    cycle,
+    getMode: () => effective(),
+  };
 })();

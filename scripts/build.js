@@ -89,12 +89,12 @@ function buildPostPage(post) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script>(function(){var t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)})()</script>
+  <script>(function(){var t=localStorage.getItem('theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t)}else{var d=window.matchMedia('(prefers-color-scheme:dark)').matches;document.documentElement.setAttribute('data-theme',d?'dark':'light')}})()</script>
   <title>${post.title} — aardbol.dev</title>
   <meta name="description" content="${post.summary}">
   <link rel="stylesheet" href="../../../css/style.css">
   <link rel="stylesheet" href="../../../css/hljs.css" id="hljs-theme">
-  <script>(function(){var t=localStorage.getItem('theme');var d=t==='dark'||(!t&&matchMedia('(prefers-color-scheme: dark)').matches);if(!d){var l=document.getElementById('hljs-theme');if(l)l.setAttribute('href',l.getAttribute('href').replace('hljs.css','hljs-light.css'))}})()</script>
+  <script>(function(){var d=document.documentElement.getAttribute('data-theme');if(d!=='dark'){var l=document.getElementById('hljs-theme');if(l)l.setAttribute('href',l.getAttribute('href').replace('hljs.css','hljs-light.css'))}})()</script>
 </head>
 <body>
   <header>
