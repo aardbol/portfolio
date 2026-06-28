@@ -1,5 +1,13 @@
 [
   {
+    "slug": "buildah-build",
+    "title": "buildah-build",
+    "date": "2026",
+    "summary": "GitHub Action to build container images using buildah. Forked from redhat-actions/buildah-build — modernized ESLint config, updated dependencies, and security fixes.",
+    "tags": ["TypeScript", "GitHub Actions", "Containers", "CI/CD"],
+    "url": "https://github.com/aardbol/buildah-build"
+  },
+  {
     "slug": "k8s-lint",
     "title": "k8s-lint",
     "date": "2026",
